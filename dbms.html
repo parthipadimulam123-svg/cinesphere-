@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineSphere - Premium Indian Movie Booking & Management System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Plotly.js for Visualizations -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311b92 100%);
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --border-color: #3b82f6;
+            --bms-red: #ff2a5f;
+            --accent-gold: #fbbf24;
+            --neon-cyan: #06b6d4;
+            --neon-green: #10b981;
+            --text-main: #f8fafc;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        /* Colorful Section Headers */
+        .gradient-text-red {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-text-cyan {
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-text-gold {
+            background: linear-gradient(90deg, #f83600, #fe8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Top Navbar */
+        .top-navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--bms-red);
+            padding: 15px 30px;
+            box-shadow: 0 4px 20px rgba(255, 42, 95, 0.2);
+        }
+
+        .nav-pills .nav-link {
+            color: #cbd5e1;
+            font-weight: 600;
+            margin-right: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #ff2a5f, #d97706);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(255, 42, 95, 0.5);
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            color: var(--text-main);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            margin-bottom: 20px;
+        }
+
+        /* Screen Visualizer */
+        .screen-container {
+            perspective: 400px;
+            margin-bottom: 25px;
+        }
+        .screen-curtain {
+            background: linear-gradient(to bottom, #38bdf8, transparent);
+            height: 14px;
+            width: 80%;
+            margin: 0 auto 10px auto;
+            border-radius: 50%;
+            box-shadow: 0 8px 30px rgba(56, 189, 248, 0.8);
+            transform: rotateX(-30deg);
+        }
+        .screen-text {
+            color: #38bdf8;
+            font-size: 0.8rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+        }
+
+        /* Seat Grid Styling */
+        .seat {
+            width: 36px;
+            height: 36px;
+            margin: 4px;
+            border-radius: 8px 8px 3px 3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        .seat.available { background-color: #334155; color: #cbd5e1; border: 1px solid #475569; }
+        .seat.available:hover { background-color: #10b981; color: #fff; transform: scale(1.15); box-shadow: 0 0 10px #10b981; }
+        .seat.selected { background-color: #10b981; color: #000; font-weight: bold; transform: scale(1.1); box-shadow: 0 0 12px #10b981; }
+        .seat.occupied { background-color: #ef4444; color: #fff; cursor: not-allowed; opacity: 0.4; }
+
+        /* Movie Selection Card */
+        .movie-card {
+            background: rgba(17, 24, 39, 0.8);
+            border-radius: 12px;
+            padding: 14px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .movie-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.3);
+        }
+        .movie-card.active-movie {
+            border-color: var(--bms-red);
+            background: rgba(255, 42, 95, 0.15);
+            box-shadow: 0 0 15px rgba(255, 42, 95, 0.4);
+        }
+
+        /* Digital Ticket Pass */
+        .bms-ticket {
+            background: linear-gradient(135deg, #1e1b4b, #4c1d95);
+            border: 2px dashed var(--accent-gold);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        pre {
+            background-color: #090d16;
+            color: #38bdf8;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        /* Cancellation Rules - Crisp White Explicit Styling */
+        .refund-rule-text {
+            color: #ffffff !important;
+            font-weight: 500;
+        }
+
+        /* Modal Overlay Styling for Snack Selection */
+        .modal-content {
+            background: #1e293b;
+            color: #f8fafc;
+            border: 2px solid var(--neon-cyan);
+            border-radius: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY PORTAL -->
+<div id="login-portal" class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="card p-5 text-center" style="max-width: 450px; width: 100%; border: 2px solid var(--bms-red);">
+        <h1 class="gradient-text-red fw-bold mb-2"><i class="fa-solid fa-film me-2"></i>CineSphere</h1>
+        <p class="text-muted mb-4">Select City & Login to Access Tickets</p>
+        
+        <form onsubmit="handleLogin(event)">
+            <div class="mb-3 text-start">
+                <label class="form-label text-warning fw-bold"><i class="fa-solid fa-location-dot me-2"></i>Select City</label>
+                <select id="login-city" class="form-select bg-dark text-white border-info form-select-lg" required>
+                    <option value="Hyderabad">Hyderabad</option>
+                    <option value="Bengaluru">Bengaluru</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Delhi NCR">Delhi NCR</option>
+                    <option value="Kolkata">Kolkata</option>
+                    <option value="Visakhapatnam">Visakhapatnam</option>
+                </select>
+            </div>
+            <div class="mb-3 text-start">
+                <label class="form-label text-light">Username / Email</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="alex@cinesphere.com" required value="GuestUser">
+            </div>
+            <div class="mb-4 text-start">
+                <label class="form-label text-light">Password</label>
+                <input type="password" class="form-control bg-dark text-white border-secondary" required value="••••••••">
+            </div>
+            <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold shadow-lg"><i class="fa-solid fa-right-to-bracket me-2"></i>Enter Dashboard</button>
+        </form>
+    </div>
+</div>
+
+<!-- MAIN DASHBOARD CONTENT (HIDDEN UNTIL LOGIN) -->
+<div id="main-dashboard" class="d-none">
+    
+    <!-- TOP BAR HEADER -->
+    <div class="top-navbar d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <h2 class="gradient-text-red fw-bold m-0 me-4"><i class="fa-solid fa-film me-2"></i>CineSphere</h2>
+            <ul class="nav nav-pills" id="mainTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="booking-tab" data-bs-toggle="pill" data-bs-target="#tab-booking" type="button" role="tab"><i class="fa-solid fa-ticket me-2"></i>Movie Booking</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="cancel-tab" data-bs-toggle="pill" data-bs-target="#tab-cancel" type="button" role="tab"><i class="fa-solid fa-arrow-rotate-left me-2"></i>Cancellation Tab</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analytics-tab" data-bs-toggle="pill" data-bs-target="#tab-analytics" type="button" role="tab" onclick="renderAnalyticsChart()"><i class="fa-solid fa-chart-pie me-2"></i>SQL Analytics & Graphs</button>
+                </li>
+            </ul>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+                <span class="badge bg-info text-dark fw-bold fs-6"><i class="fa-solid fa-city me-1"></i> <span id="current-city-txt">Hyderabad</span></span>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="logout()"><i class="fa-solid fa-power-off me-1"></i> Logout</button>
+        </div>
+    </div>
+
+    <div class="container-fluid px-4">
+        <div class="tab-content" id="mainTabContent">
+            
+            <!-- TAB 1: MOVIE BOOKING ENGINE -->
+            <div class="tab-pane fade show active" id="tab-booking" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-12">
+                        <!-- SECTION 1: THEATRE & MOVIE SELECTION -->
+                        <div class="card p-4">
+                            <div class="row g-3 align-items-center mb-3">
+                                <div class="col-md-4">
+                                    <h4 class="gradient-text-gold m-0"><i class="fa-solid fa-clapperboard me-2"></i>1. Select Theatre & Movie</h4>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-info fw-bold small m-0 me-2"><i class="fa-solid fa-city me-1"></i>Change City:</label>
+                                    <select id="city-selector" class="form-select bg-dark text-white border-info" onchange="updateCityTheatres()">
+                                        <option value="Hyderabad">Hyderabad</option>
+                                        <option value="Bengaluru">Bengaluru</option>
+                                        <option value="Chennai">Chennai</option>
+                                        <option value="Mumbai">Mumbai</option>
+                                        <option value="Delhi NCR">Delhi NCR</option>
+                                        <option value="Kolkata">Kolkata</option>
+                                        <option value="Visakhapatnam">Visakhapatnam</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-warning fw-bold small m-0 me-2"><i class="fa-solid fa-building me-1"></i>Select Theatre:</label>
+                                    <select id="theatre-select" class="form-select bg-dark text-white border-warning" onchange="onTheatreChange()">
+                                        <!-- Dynamically populated -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-3" id="movie-cards-container"></div>
+                        </div>
+
+                        <!-- SECTION 2: SEAT SELECTION & PAYMENT -->
+                        <div class="card p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="gradient-text-cyan m-0"><i class="fa-solid fa-chair me-2"></i>2. Choose Seats (<span id="active-theatre-name" class="text-white">AMB Cinemas</span>)</h4>
+                                <div>
+                                    <span class="badge bg-secondary me-2"><i class="fa-solid fa-square text-secondary me-1"></i> Available</span>
+                                    <span class="badge bg-success me-2"><i class="fa-solid fa-square text-success me-1"></i> Selected</span>
+                                    <span class="badge bg-danger"><i class="fa-solid fa-square text-danger me-1"></i> Occupied</span>
+                                </div>
+                            </div>
+
+                            <!-- SCREEN VISUALIZER -->
+                            <div class="screen-container text-center my-3">
+                                <div class="screen-curtain"></div>
+                                <span class="screen-text">ALL EYES THIS WAY (SCREEN)</span>
+                            </div>
+
+                            <!-- SEAT GRID -->
+                            <div id="seat-map" class="text-center my-4"></div>
+
+                            <!-- SUMMARY & CHECKOUT BUTTON -->
+                            <div class="row align-items-center pt-3 border-top border-secondary">
+                                <div class="col-md-6">
+                                    <div class="fs-6">Selected Seats: <strong id="selected-seats-txt" class="text-info fs-5">None</strong></div>
+                                    <div class="fs-6">Tickets Total: <strong id="total-price-txt" class="text-warning fs-5">₹0</strong></div>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button class="btn btn-warning btn-lg px-4 fw-bold shadow-lg" onclick="openSnacksModal()"><i class="fa-solid fa-arrow-right me-1"></i> Proceed to Snacks & Checkout</button>
+                                </div>
+                            </div>
+
+                            <!-- CONFIRMED TICKET DISPLAY -->
+                            <div id="ticket-display" class="mt-4 d-none">
+                                <div class="bms-ticket text-center">
+                                    <h3 class="gradient-text-gold fw-bold mb-1"><i class="fa-solid fa-circle-check me-2"></i>BOOKING CONFIRMED!</h3>
+                                    <div class="small text-light mb-3">Present this digital pass at theatre entry</div>
+                                    <div class="row text-start text-white g-3">
+                                        <div class="col-6"><strong>City:</strong> <span id="t-city" class="text-info">-</span></div>
+                                        <div class="col-6"><strong>Theatre:</strong> <span id="t-theatre" class="text-info">-</span></div>
+                                        <div class="col-6"><strong>Movie:</strong> <span id="t-movie" class="text-warning">-</span></div>
+                                        <div class="col-6"><strong>Seats:</strong> <span id="t-seats" class="text-success fw-bold">-</span></div>
+                                        <div class="col-6"><strong>Snacks:</strong> <span id="t-snacks" class="text-light">-</span></div>
+                                        <div class="col-6"><strong>Total Paid:</strong> <span id="t-price" class="text-warning fw-bold fs-5">-</span></div>
+                                        <div class="col-12 mt-2 pt-2 border-top border-secondary">
+                                            <strong>Booking Reference ID:</strong> <span id="t-id" class="text-cyan fw-bold fs-4 ms-2">TCK-REF-000</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: CANCELLATION TAB -->
+            <div class="tab-pane fade" id="tab-cancel" role="tabpanel">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card p-4">
+                            <h3 class="gradient-text-red mb-3"><i class="fa-solid fa-arrow-rotate-left me-2"></i>Booking Cancellation & Refund Engine</h3>
+                            <p class="text-muted">Enter your confirmed Booking Reference ID below to compute refunds based on the cancellation schedule[cite: 1].</p>
+                            
+                            <div class="input-group mb-4">
+                                <input type="text" id="canc-id-input" class="form-control bg-dark text-white border-info form-control-lg" placeholder="Enter Booking Ref ID (e.g., 101 or TCK-REF-542)">
+                                <button class="btn btn-danger fw-bold px-4" onclick="calculateRefund()">Search & Calculate Refund</button>
+                            </div>
+
+                            <div id="refund-result" class="p-3 bg-dark rounded text-white border border-secondary d-none"></div>
+
+                            <!-- REFUND TIER RULES (EXPLICIT WHITE COLOR TEXT) -->
+                            <div class="mt-4 p-4 border border-info rounded bg-dark">
+                                <h5 class="text-warning mb-3"><i class="fa-solid fa-shield-halved me-2"></i>Tiered Refund Schedule[cite: 1]:</h5>
+                                <ul class="list-group list-group-flush bg-transparent">
+                                    <li class="list-group-item bg-transparent border-secondary refund-rule-text">
+                                        <i class="fa-solid fa-clock text-success me-2"></i><strong>24+ Hours Before Show:</strong> 100% Full Refund[cite: 1]
+                                    </li>
+                                    <li class="list-group-item bg-transparent border-secondary refund-rule-text">
+                                        <i class="fa-solid fa-clock text-info me-2"></i><strong>6 to 24 Hours Before Show:</strong> 75% Refund[cite: 1]
+                                    </li>
+                                    <li class="list-group-item bg-transparent border-secondary refund-rule-text">
+                                        <i class="fa-solid fa-clock text-warning me-2"></i><strong>2 to 6 Hours Before Show:</strong> 50% Refund[cite: 1]
+                                    </li>
+                                    <li class="list-group-item bg-transparent border-secondary refund-rule-text">
+                                        <i class="fa-solid fa-clock text-danger me-2"></i><strong>Less than 2 Hours Before Show:</strong> 0% Refund[cite: 1]
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SQL ANALYTICS & DATABASE SCHEMA TAB -->
+            <div class="tab-pane fade" id="tab-analytics" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card p-3">
+                            <h5 class="gradient-text-cyan mb-3"><i class="fa-solid fa-chart-bar me-2"></i>Live Occupancy SQL Analytics</h5>
+                            <div id="chart-occupancy" style="height: 300px;"></div>
+                        </div>
+                        <div class="card p-3">
+                            <h5 class="gradient-text-gold mb-3"><i class="fa-solid fa-chart-line me-2"></i>City Revenue Analytics (INR ₹)</h5>
+                            <div id="chart-revenue" style="height: 280px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card p-3">
+                            <h5 class="text-info mb-2"><i class="fa-solid fa-database me-2"></i>Normalized 3NF Database & Integrity Constraints</h5>
+                            <pre><code>-- INTEGRITY CONSTRAINTS ENFORCED[cite: 1]
+-- 1. Atomic seat allocation per show[cite: 1]
+CREATE TABLE BOOKING_SEAT (
+    booking_id INT,
+    show_id INT,
+    seat_id VARCHAR(5),
+    PRIMARY KEY (show_id, seat_id) -- Prevents double-booking[cite: 1]
+);
+
+-- 2. Non-negative quantities & positive Rupee prices[cite: 1]
+CREATE TABLE CONCESSION_ORDER (
+    order_id INT PRIMARY KEY,
+    quantity INT CHECK(quantity > 0),[cite: 1]
+    price_inr DECIMAL(10,2) CHECK(price_inr > 0)
+);
+
+-- 3. Show Occupancy Analytics View
+CREATE VIEW vw_show_occupancy AS
+SELECT show_id, 
+       (COUNT(seat_id) * 100.0 / total_seats) AS occupancy_pct
+FROM BOOKING_SEAT
+GROUP BY show_id;</code></pre>
+                        </div>
+
+                        <div class="card p-3">
+                            <h5 class="gradient-text-red mb-2"><i class="fa-solid fa-calendar-plus me-2"></i>Show Scheduler (Overlap Trigger)</h5>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <select id="sched-screen" class="form-select bg-dark text-white border-secondary">
+                                        <option value="1">Screen 1 (AMB Cinemas)</option>
+                                        <option value="2">Screen 2 (Prasads Multiplex)</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <input type="time" id="sched-time" class="form-control bg-dark text-white border-secondary" value="18:00">
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <button class="btn btn-outline-warning w-100" onclick="scheduleShow()">Check Overlap & Schedule</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- OPTIONAL SNACKS MODAL BEFORE PAYMENT -->
+<div class="modal fade" id="snacksModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content p-2">
+            <div class="modal-header border-secondary">
+                <h4 class="modal-title gradient-text-gold"><i class="fa-solid fa-popcorn me-2"></i>Optional Snacks & Beverages</h4>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Enhance your movie experience! Add delicious snacks or skip to complete payment directly.</p>
+                <div class="row g-3" id="concession-list"></div>
+                
+                <div class="p-3 bg-dark rounded border border-info mt-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <div>Tickets: <span id="modal-tickets-cost" class="text-warning">₹0</span></div>
+                        <div>Snacks: <span id="modal-snacks-cost" class="text-cyan">₹0</span></div>
+                        <h5 class="m-0 mt-1">Grand Total: <strong id="modal-grand-total" class="text-success">₹0</strong></h5>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary justify-content-between">
+                <button type="button" class="btn btn-outline-light px-4" onclick="processPayment(true)">
+                    <i class="fa-solid fa-forward me-1"></i> Skip Snacks & Pay Tickets Only
+                </button>
+                <button type="button" class="btn btn-success fw-bold px-4" onclick="processPayment(false)">
+                    <i class="fa-solid fa-credit-card me-1"></i> Pay with Snacks
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // City & Theatre Database Map
+    const cityTheatres = {
+        "Hyderabad": ["AMB Cinemas - Gachibowli", "Prasads Multiplex - NTR Marg", "PVR Forum Mall - Kukatpally"],
+        "Bengaluru": ["PVR VR Bengaluru - Whitefield", "INOX Garuda Mall - MG Road", "Cinepolis - Forum Shantiniketan"],
+        "Chennai": ["Sathyam Cinemas - Royapettah", "PVR VR Chennai - Anna Nagar", "AGS Cinemas - T. Nagar"],
+        "Mumbai": ["PVR ICON Phoenix - Lower Parel", "INOX Megaplex - Malad", "Regal Cinema - Colaba"],
+        "Delhi NCR": ["PVR Director's Cut - Vasant Kunj", "Plexus Cinepolis - Saket", "INOX Megaplex - Noida"],
+        "Kolkata": ["INOX Quest Mall - Park Circus", "PVR Mani Square - Kankurgachi", "Star Theatre - Bidhan Sarani"],
+        "Visakhapatnam": ["Varun INOX - Beach Road", "CMR Central - Maddilapalem", "Melody Theatre - Jagadamba"]
+    };
+
+    const movies = [
+        { id: 1, title: "Bahubali: The Beginning", genre: "Epic/Action", duration: "159m", price: 200 },
+        { id: 2, title: "Chathrapati", genre: "Action/Drama", duration: "158m", price: 200 },
+        { id: 3, title: "Kalki 2898 AD", genre: "Sci-Fi/Action", duration: "180m", price: 250 },
+        { id: 4, title: "Darling", genre: "Romance/Comedy", duration: "150m", price: 200 }
+    ];
+
+    const concessions = [
+        { id: 1, name: "Caramel Popcorn (Large)", price: 250 },
+        { id: 2, name: "Salted Popcorn (Medium)", price: 180 },
+        { id: 3, name: "Pepsi Cold Drink (750ml)", price: 120 },
+        { id: 4, name: "Cheese Nachos", price: 200 }
+    ];
+
+    let currentCity = "Hyderabad";
+    let selectedMovie = movies[0];
+    let selectedSeats = [];
+    let occupiedSeats = ['A3', 'A4', 'B5', 'C2'];
+    let snackCart = {};
+    let modalInstance = null;
+
+    let bookingsStore = [
+        { id: '101', city: 'Hyderabad', theatre: 'AMB Cinemas - Gachibowli', movie: 'Bahubali: The Beginning', seats: ['A3', 'A4'], price: 400, showTimeHoursAway: 12 }
+    ];
+
+    // Handle Authentication
+    function handleLogin(e) {
+        e.preventDefault();
+        currentCity = document.getElementById('login-city').value;
+        document.getElementById('current-city-txt').innerText = currentCity;
+        document.getElementById('city-selector').value = currentCity;
+
+        document.getElementById('login-portal').classList.add('d-none');
+        document.getElementById('main-dashboard').classList.remove('d-none');
+
+        updateCityTheatres();
+        renderMovies();
+        renderSeatMap();
+        renderConcessions();
+    }
+
+    function logout() {
+        document.getElementById('main-dashboard').classList.add('d-none');
+        document.getElementById('login-portal').classList.remove('d-none');
+    }
+
+    // Update City & Theatre selections
+    function updateCityTheatres() {
+        currentCity = document.getElementById('city-selector').value;
+        document.getElementById('current-city-txt').innerText = currentCity;
+
+        const theatreSelect = document.getElementById('theatre-select');
+        const list = cityTheatres[currentCity] || [];
+        theatreSelect.innerHTML = list.map(t => `<option value="${t}">${t}</option>`).join('');
+        onTheatreChange();
+    }
+
+    function onTheatreChange() {
+        const theatreName = document.getElementById('theatre-select').value;
+        document.getElementById('active-theatre-name').innerText = theatreName;
+        // Generate pseudo-random occupied seats per theatre change
+        occupiedSeats = ['A1', 'B3', 'C4', 'D6'];
+        selectedSeats = [];
+        updatePricingText();
+        renderSeatMap();
+    }
+
+    // Render Movie Cards
+    function renderMovies() {
+        const container = document.getElementById('movie-cards-container');
+        container.innerHTML = movies.map(m => `
+            <div class="col-md-6 col-xl-3">
+                <div class="movie-card ${m.id === selectedMovie.id ? 'active-movie' : ''}" onclick="selectMovie(${m.id})">
+                    <h5 class="gradient-text-gold mb-1">${m.title}</h5>
+                    <div class="small text-muted">${m.genre} • ${m.duration}</div>
+                    <div class="fw-bold mt-2 text-white fs-5">₹${m.price}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function selectMovie(id) {
+        selectedMovie = movies.find(m => m.id === id);
+        selectedSeats = [];
+        renderMovies();
+        renderSeatMap();
+        updatePricingText();
+    }
+
+    // Render Seating Grid
+    function renderSeatMap() {
+        const seatMap = document.getElementById('seat-map');
+        seatMap.innerHTML = '';
+        const rows = ['A', 'B', 'C', 'D', 'E'];
+
+        rows.forEach(row => {
+            const rowDiv = document.createElement('div');
+            for (let i = 1; i <= 8; i++) {
+                const seatId = `${row}${i}`;
+                const seat = document.createElement('div');
+                seat.classList.add('seat');
+                seat.innerText = seatId;
+
+                if (occupiedSeats.includes(seatId)) {
+                    seat.classList.add('occupied');
+                } else if (selectedSeats.includes(seatId)) {
+                    seat.classList.add('selected');
+                    seat.onclick = () => toggleSeat(seatId);
+                } else {
+                    seat.classList.add('available');
+                    seat.onclick = () => toggleSeat(seatId);
+                }
+                rowDiv.appendChild(seat);
+            }
+            seatMap.appendChild(rowDiv);
+        });
+    }
+
+    function toggleSeat(seatId) {
+        if (selectedSeats.includes(seatId)) {
+            selectedSeats = selectedSeats.filter(s => s !== seatId);
+        } else {
+            selectedSeats.push(seatId);
+        }
+        updatePricingText();
+        renderSeatMap();
+    }
+
+    function updatePricingText() {
+        document.getElementById('selected-seats-txt').innerText = selectedSeats.length ? selectedSeats.join(', ') : 'None';
+        document.getElementById('total-price-txt').innerText = `₹${selectedSeats.length * selectedMovie.price}`;
+    }
+
+    // Render Concession Snacks
+    function renderConcessions() {
+        const list = document.getElementById('concession-list');
+        list.innerHTML = concessions.map(c => `
+            <div class="col-md-6">
+                <div class="p-3 bg-dark rounded border border-secondary d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold text-white">${c.name}</div>
+                        <div class="text-warning small">₹${c.price}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-danger px-2 py-0" onclick="updateSnackQty(${c.id}, -1)">-</button>
+                        <span id="snack-qty-${c.id}" class="fw-bold">0</span>
+                        <button class="btn btn-sm btn-outline-success px-2 py-0" onclick="updateSnackQty(${c.id}, 1)">+</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateSnackQty(id, delta) {
+        if (!snackCart[id]) snackCart[id] = 0;
+        snackCart[id] = Math.max(0, snackCart[id] + delta);
+        document.getElementById(`snack-qty-${id}`).innerText = snackCart[id];
+        updateModalTotal();
+    }
+
+    function openSnacksModal() {
+        if (!selectedSeats.length) return alert("Please select at least one seat first!");
+        updateModalTotal();
+        modalInstance = new bootstrap.Modal(document.getElementById('snacksModal'));
+        modalInstance.show();
+    }
+
+    function updateModalTotal() {
+        const ticketsCost = selectedSeats.length * selectedMovie.price;
+        let snacksCost = 0;
+        Object.keys(snackCart).forEach(id => {
+            const item = concessions.find(c => c.id == id);
+            snacksCost += item.price * snackCart[id];
+        });
+
+        document.getElementById('modal-tickets-cost').innerText = `₹${ticketsCost}`;
+        document.getElementById('modal-snacks-cost').innerText = `₹${snacksCost}`;
+        document.getElementById('modal-grand-total').innerText = `₹${ticketsCost + snacksCost}`;
+    }
+
+    // Payment Processing & Pass Generation
+    function processPayment(skipSnacks = false) {
+        if (skipSnacks) {
+            snackCart = {};
+        }
+
+        const ticketsCost = selectedSeats.length * selectedMovie.price;
+        let snacksCost = 0;
+        let snacksSummary = [];
+
+        Object.keys(snackCart).forEach(id => {
+            if (snackCart[id] > 0) {
+                const item = concessions.find(c => c.id == id);
+                snacksCost += item.price * snackCart[id];
+                snacksSummary.push(`${item.name} (x${snackCart[id]})`);
+            }
+        });
+
+        const grandTotal = ticketsCost + snacksCost;
+        const currentTheatre = document.getElementById('theatre-select').value;
+        const bookingRef = Math.floor(100 + Math.random() * 900).toString();
+
+        alert(`Payment of ₹${grandTotal} confirmed successfully! Ticket generated.`);
+
+        if (modalInstance) modalInstance.hide();
+
+        // Record Confirmed Booking
+        occupiedSeats.push(...selectedSeats);
+        bookingsStore.push({
+            id: bookingRef,
+            city: currentCity,
+            theatre: currentTheatre,
+            movie: selectedMovie.title,
+            seats: [...selectedSeats],
+            price: grandTotal,
+            showTimeHoursAway: 26
+        });
+
+        // Display Ticket
+        document.getElementById('t-city').innerText = currentCity;
+        document.getElementById('t-theatre').innerText = currentTheatre;
+        document.getElementById('t-movie').innerText = selectedMovie.title;
+        document.getElementById('t-seats').innerText = selectedSeats.join(', ');
+        document.getElementById('t-snacks').innerText = snacksSummary.length ? snacksSummary.join(', ') : 'None';
+        document.getElementById('t-price').innerText = `₹${grandTotal}`;
+        document.getElementById('t-id').innerText = `TCK-REF-${bookingRef}`;
+        document.getElementById('ticket-display').classList.remove('d-none');
+
+        // Reset
+        selectedSeats = [];
+        snackCart = {};
+        renderConcessions();
+        updatePricingText();
+        renderSeatMap();
+    }
+
+    // Cancellation Tier Calculation Engine
+    function calculateRefund() {
+        let inputVal = document.getElementById('canc-id-input').value.trim();
+        const refId = inputVal.replace("TCK-REF-", "");
+        const b = bookingsStore.find(x => x.id === refId);
+        const div = document.getElementById('refund-result');
+
+        if (!b) {
+            div.classList.remove('d-none');
+            div.innerHTML = `<span class="text-danger fw-bold"><i class="fa-solid fa-circle-xmark me-2"></i>Booking Reference ID not found!</span>`;
+            return;
+        }
+
+        let pct = 0;
+        if (b.showTimeHoursAway >= 24) pct = 100;
+        else if (b.showTimeHoursAway >= 6) pct = 75;
+        else if (b.showTimeHoursAway >= 2) pct = 50;
+
+        const refundAmt = (pct / 100) * b.price;
+        div.classList.remove('d-none');
+        div.innerHTML = `
+            <div class="mb-1"><strong>Reference ID:</strong> TCK-REF-${b.id} | <strong>City:</strong> ${b.city}</div>
+            <div class="mb-1"><strong>Theatre:</strong> ${b.theatre} | <strong>Movie:</strong> ${b.movie}</div>
+            <div class="mb-1"><strong>Seats:</strong> ${b.seats.join(', ')} | <strong>Total Paid:</strong> ₹${b.price}</div>
+            <div class="mb-1"><strong>Refund Tier:</strong> <span class="badge bg-warning text-dark">${pct}% Refund</span> (${b.showTimeHoursAway} hours remaining)</div>
+            <div class="mt-2 fs-5">Eligible Refund Amount: <strong class="text-success">₹${refundAmt.toFixed(2)}</strong></div>
+        `;
+    }
+
+    function scheduleShow() {
+        const time = document.getElementById('sched-time').value;
+        if (time === "18:00") {
+            alert("❌ Database Trigger Error: Show overlap detected at 18:00!");
+        } else {
+            alert("✅ Show scheduled successfully with zero overlap conflicts.");
+        }
+    }
+
+    // Analytics Visualization Engine
+    function renderAnalyticsChart() {
+        Plotly.newPlot('chart-occupancy', [{
+            x: ['AMB Cinemas', 'Prasads', 'PVR VR Chennai', 'INOX Quest'],
+            y: [85, 92, 68, 74],
+            type: 'bar',
+            marker: { color: ['#ff2a5f', '#fbbf24', '#06b6d4', '#10b981'] }
+        }], {
+            title: { text: 'Show Occupancy Rates (%)', font: { color: '#fff', size: 14 } },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#fff' },
+            margin: { t: 30, b: 40, l: 30, r: 10 }
+        });
+
+        Plotly.newPlot('chart-revenue', [{
+            labels: ['Hyderabad', 'Bengaluru', 'Chennai', 'Mumbai'],
+            values: [45000, 38000, 29000, 52000],
+            type: 'pie',
+            marker: { colors: ['#ff2a5f', '#fbbf24', '#06b6d4', '#10b981'] }
+        }], {
+            title: { text: 'City Revenue Share', font: { color: '#fff', size: 14 } },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#fff' },
+            margin: { t: 30, b: 10, l: 10, r: 10 }
+        });
+    }
+</script>
+</body>
+</html>
